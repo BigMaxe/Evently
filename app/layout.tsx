@@ -6,6 +6,7 @@ const sarala = Sarala({
   variable: "--font-sarala",
   weight: ['400', '700'],
   subsets: ["latin"],
+  display: "swap",
 });
 
 const montserratAlt = Montserrat_Alternates({
@@ -22,12 +23,15 @@ const montserratAlt = Montserrat_Alternates({
     '900',
   ],
   subsets: ["latin"],
+  display: "swap",
 });
 
 const blackHanSans = Black_Han_Sans({
   variable: "--font-black-han-sans",
   subsets: ["latin"],
   weight: "400",
+  display: "swap",
+  adjustFontFallback: false,
 })
 
 export const metadata: Metadata = {
