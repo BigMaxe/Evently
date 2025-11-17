@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import heroImage from '@/public/images/hero-image.jpg'
+
 
 export function Hero() {
     return (
@@ -7,7 +7,7 @@ export function Hero() {
             {/* background Image */}
             <div className='absolute inset-0 z-0'>
                 <Image 
-                    src={heroImage}
+                    src='https://res.cloudinary.com/dg2et5gsi/image/upload/v1763342599/man-2179313_1920_jlrusj.jpg'
                     alt=' Musician Performing'
                     fill
                     className='object-cover'
