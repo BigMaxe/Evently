@@ -1,67 +1,59 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import birthdayBash from '@/public/images/cta-img-1.jpg'
-import technology from '@/public/images/cta-img-2.jpg'
-import sports from '@/public/images/cta-img-3.jpg'
-import foodDrinks from '@/public/images/cta-img-4.jpg'
-import carnivals from '@/public/images/cta-img-5.jpg'
-import religious from '@/public/images/cta-img-6.jpg'
-import musicFestivals from '@/public/images/cta-img-7.jpg'
-import comedy from '@/public/images/cta-img-8.jpg'
 
 const categories = [
     {
         id: 1,
         name: 'Birthday Bash',
         slug: 'birthday-bash',
-        image: birthdayBash,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340096/cta-img-1_wu4ebc.jpg',
     },
     {
         id: 2,
         name:'Technology',
         slug: 'technology',
-        image: technology,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340064/fe-img1_iny63s.jpg',
     },
     {
         id: 3,
         name: 'Sports',
         slug: 'sports',
-        image: sports,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340119/cta-img-3_mfrciy.jpg',
     },
     {
         id: 4,
         name: 'Food and Drinks',
         slug: 'food-and-drinks',
-        image: foodDrinks,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340123/cta-img-4_smfyt5.jpg',
     },
     {
         id: 5,
         name: 'Carnivals',
         slug: 'carnivals',
-        image: carnivals,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340108/cta-img-7_pln0uu.jpg',
     },
     {
         id: 6,
         name: 'Religious',
         slug: 'religious',
-        image: religious,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340116/cta-img-6_tcdxso.jpg',
     },
     {
         id: 7,
         name: 'Music Festivals',
         slug: 'music-festivals',
-        image: musicFestivals,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340115/cta-img-5_au69nd.jpg',
     },
     {
         id: 8,
         name: 'Comedy',
         slug: 'comedy',
-        image: comedy,
+        image: 'https://res.cloudinary.com/dg2et5gsi/image/upload/v1763340140/cta-img-8_wxsp5w.jpg',
     },
 ]
 
-export function CatergorySection() {
+export function CategorySection() {
     return (
         <section className='bg-gray-100 py-16'>
             <div className='wrapper'>
