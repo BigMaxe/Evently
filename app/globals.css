@@ -35,6 +35,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 @layer utilities {
   /* Custom wrapper for consistent max-width */
   .wrapper {

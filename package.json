@@ -11,6 +11,8 @@
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.23.13",
     "lucide-react": "^0.552.0",
     "next": "16.0.1",
     "next-cloudinary": "^6.17.5",
