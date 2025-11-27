@@ -1,5 +1,10 @@
+'use client'
+
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { AuthModal } from '@/components/auth/AuthModal'
 
 
 const categories = [
@@ -54,51 +59,73 @@ const categories = [
 ]
 
 export function CategorySection() {
+    const { status } = useSession()
+    const [showAuthModal, setShowAuthModal] = useState(false)
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+    const isAuthenticated = status === 'authenticated'
+
+    const handleCategoryClick = (e: React.MouseEvent, slug: string) => {
+        if (!isAuthenticated) {
+            e.preventDefault()
+            setSelectedCategory(slug)
+            setShowAuthModal(true)
+        }
+    }
+
     return (
-        <section className='bg-gray-100 py-16'>
-            <div className='wrapper'>
-                <h2 className='text-3xl md:text-4xl font-bold mb-8 font-black-han-sans'>
-                    Explore Events by Category
-                </h2>
+        <>
+            <section className='bg-gray-100 py-16'>
+                <div className='wrapper'>
+                    <h2 className='text-3xl md:text-4xl font-bold mb-8 font-black-han-sans'>
+                        Explore Events by Category
+                    </h2>
 
-                {/* category grid */}
-                <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6'>
-                    {categories.map((category) => (
+                    {/* category grid */}
+                    <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6'>
+                        {categories.map((category) => (
+                            <Link
+                                key={category.id}
+                                href={`/categories/${category.slug}`}
+                                onClick={(e) => handleCategoryClick(e, category.slug)}
+                                className='group'
+                            >
+                                <div className='relative aspect-square rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform group-hover:scale-105'>
+                                    <Image 
+                                        src={category.image}
+                                        alt={category.name}
+                                        fill
+                                        className='object-cover'
+                                        sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw'
+                                    />
+                                    {/* Overlay */}
+                                    <div className='absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-300'></div>
+                                </div>
+
+                                {/* Category Name */}
+                                <p className='mt-2 text-center font-semibold text-gray-800 font-sarala'>
+                                    {category.name}
+                                </p>
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* More button */}
+                    <div className='text-right mt-6'>
                         <Link
-                            key={category.id}
-                            href={`/categories/${category.slug}`}
-                            className='group'
+                            href="/categories"
+                            onClick={(e) => handleCategoryClick(e, 'all')}
+                            className='ext-green-600 font-semibold hover:text-green-700 transition font-sarala'
                         >
-                            <div className='relative aspect-square rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform group-hover:scale-105'>
-                                <Image 
-                                    src={category.image}
-                                    alt={category.name}
-                                    fill
-                                    className='object-cover'
-                                    sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw'
-                                />
-                                {/* Overlay */}
-                                <div className='absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-300'></div>
-                            </div>
-
-                            {/* Category Name */}
-                            <p className='mt-2 text-center font-semibold text-gray-800 font-sarala'>
-                                {category.name}
-                            </p>
+                            more...
                         </Link>
-                    ))}
+                    </div>
                 </div>
+            </section>
 
-                {/* More button */}
-                <div className='text-right mt-6'>
-                    <Link
-                        href="/categories"
-                        className='ext-green-600 font-semibold hover:text-green-700 transition font-sarala'
-                    >
-                        more...
-                    </Link>
-                </div>
-            </div>
-        </section>
+            <AuthModal 
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+            />
+        </>
     )
 }

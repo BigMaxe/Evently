@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sarala, Montserrat_Alternates, Black_Han_Sans } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const sarala = Sarala({
   variable: "--font-sarala",
@@ -50,7 +51,9 @@ export default function RootLayout({
         className={`${sarala.variable} ${montserratAlt.variable} ${blackHanSans.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

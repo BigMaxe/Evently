@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { ProtectedButton } from '@/components/shared/ProtectedButton'
 
 
 export function Hero() {
@@ -36,8 +37,8 @@ export function Hero() {
 
                         {/* CTA Buttons */}
                         <div className='flex flex-col sm:flex-row gap-4 mb-5'>
-                            <button className='bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-3 rounded-full transition'> Create Event </button>
-                            <button className='border-2 border-white hover:bg-white text-white hover:text-black font-semibold px-8 py-3 rounded-full transition'> Get tickets now </button>
+                            <ProtectedButton href='/events/create' className='bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-3 rounded-full transition'> Create Event </ProtectedButton>
+                            <ProtectedButton href='/events' requireAuth={false} className='border-2 border-white hover:bg-white text-white hover:text-black font-semibold px-8 py-3 rounded-full transition'> Get tickets now </ProtectedButton>
                         </div>
 
                         {/* Subtitle */}
