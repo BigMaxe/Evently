@@ -17,6 +17,14 @@ export function Header() {
         await signOut({ callbackUrl: '/' })
     }
 
+    const handleDiscoverClick = (e: React.MouseEvent) => {
+        if (!isAuthenticated) {
+            e.preventDefault()
+            setShowAuthModal(true)
+        }
+    }
+
+
     return (
         <>
             <header className="bg-black/50 backdrop-blur-md text-white fixed top-0 left-0 z-50 border-b border-black/10 w-full">
@@ -40,7 +48,7 @@ export function Header() {
 
                     {/* Desktop Buttons */}
                     <div className='hidden md:flex items-center gap-4 flex-shrink-0'>
-                        <Link href="/events" className='bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-3 rounded-full transitiontext-sm hover:text-white transition whitespace-nowrap'> Discover </Link>
+                        <Link href="/events" onClick={handleDiscoverClick} className='bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-3 rounded-full transitiontext-sm hover:text-white transition whitespace-nowrap'> Discover </Link>
                         
                         {isAuthenticated ? (
                             <>
@@ -108,7 +116,7 @@ export function Header() {
                             </div>
 
                             {/* Mobile Navigation Links */}
-                            <Link href="/events" className='bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-3 rounded-full transitiontext-left py-3 hover:text-green-500 transition'>
+                            <Link href="/events" onClick={handleDiscoverClick} className='bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-3 rounded-full transitiontext-left py-3 hover:text-green-500 transition'>
                                 Discover
                             </Link>
                             

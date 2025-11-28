@@ -179,6 +179,13 @@ export function FeaturedEvents() {
         )
     }
 
+    const handleViewAllEvents = (e: React.MouseEvent) => {
+        if (!isAuthenticated) {
+            e.preventDefault()
+            setShowAuthModal(true)
+        }
+    }
+
     return (
         <>
             <section className="py-16 bg-white">
@@ -316,6 +323,7 @@ export function FeaturedEvents() {
                         {/* View all events button */}
                         <Link
                             href="/events"
+                            onClick={handleViewAllEvents}
                             className="group flex items-center gap-2 text-green-600 hover:text-green-700 font-semibold transition font-sarala"
                         >
                             <span>View All Events</span>
