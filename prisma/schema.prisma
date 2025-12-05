@@ -1,0 +1,122 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For email/password auth (hashed)
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  events        Event[]   // Events created by this user
+  bookings      Booking[] // Events booked by this user
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  ORGANIZER
+}
+
+// NextAuth Account Model (for OAuth)
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+// NextAuth Session Model
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Event Model
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  slug        String   
+  image       String
+  category    String
+  location    String
+  date        DateTime
+  startTime   String?
+  endTime     String?
+  price       Float    @default(0)
+  isFree      Boolean  @default(false)
+  featured    Boolean  @default(false)
+  popular     Boolean  @default(false)
+  upcoming    Boolean  @default(true)
+  totalTickets Int     @default(0)
+  availableTickets Int @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  organizerId String   @db.ObjectId
+  organizer   User     @relation(fields: [organizerId], references: [id])
+  bookings    Booking[]
+
+  @@index([category])
+  @@index([date])
+  @@index([slug])
+}
+
+// Booking Model (Tickets)
+model Booking {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  ticketCount   Int      @default(1)
+  totalAmount   Float
+  paymentStatus PaymentStatus @default(PENDING)
+  bookingDate   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  userId  String @db.ObjectId
+  eventId String @db.ObjectId
+  user    User   @relation(fields: [userId], references: [id])
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  @@index([userId])
+  @@index([eventId])
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
