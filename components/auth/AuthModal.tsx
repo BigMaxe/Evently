@@ -22,14 +22,21 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
     const [fullName, setFullName] = useState('')
     const [rememberMe, setRememberMe] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState('')
 
     const handleSocialSignIn = async (provider: 'google' | 'facebook' | 'apple') => {
         try {
             setIsLoading(true)
-            await signIn(provider, { callbackUrl: '/' })
+            setError('')
+            console.log('Attempting OAuth sign in with:', provider)
+
+            await signIn(provider, {
+                callbackUrl: '/',
+                redirect: true,
+            })
         } catch (error) {
             console.error('Social sign in error:', error)
-        } finally {
+            setError('Failed to sign in. Please try again.')
             setIsLoading(false)
         }
     }
@@ -37,6 +44,9 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
     const handleCredentialSignIn = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError('')
+
+        console.log('Attempting credential sign in for:', email)
 
         try {
             const result = await signIn('credentials', {
@@ -46,12 +56,15 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
             })
 
             if (result?.error) {
-                alert('Invalid credentials')
+                console.error('Sign in error:', result.error)
+                setError(result.error)
             } else {
-                onClose()
+                console.log('Sign in successful!')
+                window.location.reload()
             }
         } catch (error) {
             console.error('Sign in error:', error)
+            setError('An unexpected error occurred. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -59,23 +72,70 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault()
+        setError('')
 
         if (password !== confirmPassword) {
-            alert('Passwords do not match')
+            setError('Passwords do not match')
+            return
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters long')
             return
         }
 
         setIsLoading(true)
-        // implement actual signup later
-        console.log('Sign up:', { fullName, email, password })
-        setTimeout(() => {
+        console.log('Attempting sign up for:', email)
+
+        try {
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: fullName,
+                    email,
+                    password
+                }),
+            })
+
+            const data = await response.json()
+
+            if(!response.ok) {
+                console.error('Sign up error:', data)
+                setError(data.error || 'Failed to create account')
+                setIsLoading(false)
+                return
+            }
+
+            console.log('Sign up successful, now signing in...')
+
+            // Auto sign in after successful signup
+            const signInResult = await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+            })
+
+            if (signInResult?.error) {
+                setError('Account created! Please sign in manually.')
+                setView('signin')
+            } else {
+                console.log('Auto sign in successful!')
+                window.location.reload()
+            }
+        } catch (error) {
+            console.error('Sign up error:', error)
+            setError('An unexpected error occurred. Please try again.')
+        } finally {
             setIsLoading(false)
-            setView('signin')
-        }, 1000)
+        }
     }
     const handleForgotPassword = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError('')
+
+
         //implement password reset
         console.log('Forgot password:', email)
         setTimeout(() => {
@@ -87,6 +147,8 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
     const handleUnlockAccount = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError('')
+
         // implement account unlock
         console.log('Unlock account:', email)
         setTimeout(() => {
@@ -126,6 +188,13 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                         </button>
 
                         <div className="p-8">
+                            {/* Error Message */}
+                            {error && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-sm text-red-600 font-sarala">{error}</p>
+                                </div>
+                            )}
+
                             {/* sign in view */}
                             {view === 'signin' && (
                                 <div>
@@ -183,7 +252,8 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                             onChange={(e) => setEmail(e.target.value)}
                                             placeholder="Email"
                                             required
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
+                                            disabled={isLoading}
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala disabled:opacity-50"
                                         />
                                         <div className="flex gap-3 mb-3">
                                             <input 
@@ -192,7 +262,8 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 placeholder="Password"
                                                 required
-                                                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
+                                                disabled={isLoading}
+                                                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala disabled:opacity-50"
                                             />
                                             <button
                                                 type="submit"
@@ -217,19 +288,28 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                     {/* bottom links */}
                                     <div className="flex justify-center gap-6 text-sm font-sarala">
                                         <button
-                                            onClick={() => setView('signup')}
+                                            onClick={() => {
+                                                setView('signup')
+                                                setError('')
+                                            }}
                                             className="text-gray-600 hover:text-black transition"
                                         >
                                             Sign Up
                                         </button>
                                         <button
-                                            onClick={() => setView('forgot')}
+                                            onClick={() => {
+                                                setView('forgot')
+                                                setError('')
+                                            }}
                                             className="text-gray-600 hover:text-black transition"
                                         >
                                             Forgot Password
                                         </button>
                                         <button
-                                            onClick={() => setView('unlock')}
+                                            onClick={() => {
+                                                setView('unlock')
+                                                setError('')
+                                            }}
                                             className="text-gray-600 hover:text-black transition"
                                         >
                                             Unlock Account
@@ -281,7 +361,7 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                         <div className="absolute inset-0 flex items-center">
                                             <div className="w-full border-t border-gray-300"></div>
                                         </div>
-                                        <div className="rlative flex justify-center">
+                                        <div className="relative flex justify-center">
                                             <span className="bg-white px-4 text-gray-500 font-sarala">or</span>
                                         </div>
                                     </div>
@@ -293,6 +373,7 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                             onChange={(e) => setFullName(e.target.value)}
                                             placeholder="Full Name"
                                             required
+                                            disabled={isLoading}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
                                         />
                                         <input 
@@ -301,6 +382,7 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                             onChange={(e) => setEmail(e.target.value)}
                                             placeholder="Email"
                                             required
+                                            disabled={isLoading}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
                                         />
                                         <div className="flex gap-3 mb-6">
@@ -310,6 +392,7 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 placeholder="Password"
                                                 required
+                                                disabled={isLoading}
                                                 className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
                                             />
                                             <input 
@@ -318,6 +401,7 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                                 placeholder="Confirm Password"
                                                 required
+                                                disabled={isLoading}
                                                 className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
                                             />
                                         </div>
@@ -332,13 +416,13 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                     </form>
 
                                     <div className="flex justify-center gap-6 text-sm font-sarala">
-                                        <button onClick={() => setView('signin')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('signin'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Sign in
                                         </button>
-                                        <button onClick={() => setView('forgot')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('forgot'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Forgot Password
                                         </button>
-                                        <button onClick={() => setView('unlock')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('unlock'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Unlock Account
                                         </button>
                                     </div>
@@ -358,7 +442,8 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                             onChange={(e) => setEmail(e.target.value)}
                                             placeholder="Email"
                                             required
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
+                                            disabled={isLoading}
+                                            className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala disabled:opacity-50"
                                         />
 
                                         <button
@@ -371,13 +456,13 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                     </form>
 
                                     <div className="flex justify-center gap-6 text-sm font-sarala">
-                                        <button onClick={() => setView('signin')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('signin'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Sign in
                                         </button>
-                                        <button onClick={() => setView('signup')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('signup'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Sign Up
                                         </button>
-                                        <button onClick={() => setView('unlock')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => {setView('unlock'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Unlock Account
                                         </button>
                                     </div>
@@ -397,6 +482,7 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                             onChange={(e) => setEmail(e.target.value)}
                                             placeholder="Email"
                                             required
+                                            disabled={isLoading}
                                             className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-green-500 font-sarala"
                                         />
 
@@ -410,13 +496,13 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                     </form>
 
                                     <div className="flex justify-center gap-6 text-sm font-sarala">
-                                        <button onClick={() => setView('signin')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('signin'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Sign in
                                         </button>
-                                        <button onClick={() => setView('forgot')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('forgot'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Forgot Password
                                         </button>
-                                        <button onClick={() => setView('signup')} className="text-gray-600 hover:text-black transition">
+                                        <button onClick={() => { setView('signup'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Sign Up
                                         </button>
                                     </div>

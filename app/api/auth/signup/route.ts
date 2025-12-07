@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
             }
         })
 
+        console.log('User created successfully:', user.email)
+
         return NextResponse.json({
             message: 'User created successfully',
             user: {
