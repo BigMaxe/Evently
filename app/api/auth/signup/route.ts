@@ -6,6 +6,8 @@ export async function POST(request: NextRequest) {
     try {
         const { name, email, password } = await request.json()
 
+        console.log('Sign up attempt for:', email)
+
         if (!email || !password) {
             return NextResponse.json(
                 { error: 'Email and Password are required' },
