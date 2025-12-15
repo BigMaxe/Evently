@@ -1,23 +1,39 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient()
 
 async function main() {
     console.log('🌱 Seeding database...')
 
+    const adminPassword = await bcrypt.hash('admin123', 10)
+    const admin = await prisma.user.upsert({
+        where: { email: 'admin@example.com' },
+        update: {},
+        create: {
+            email: 'admin@example.com',
+            name: 'Admin User',
+            password: adminPassword,
+            role: 'ADMIN',
+        },
+    })
+    console.log('✅ Created admin user:', admin.email)
+
+    const organizerPassword = await bcrypt.hash('organizer123', 10)
     const organizer = await prisma.user.upsert({
         where: { email: 'organizer@evently.com' },
         update: {},
         create: {
             email: 'organizer@evently.com',
             name: 'Event Organizer',
+            password: organizerPassword,
             role: 'ORGANIZER',
         },
     })
 
-    console.log('✅ Created organizer:', organizer.email)
+    console.log('✅ Created organizer user:', organizer.email)
 
-    const events = [
+    const sampleEvents = [
         {
             title: 'Tech Summer Summit 2025',
             description: 'Join us for the biggest tech conference of the year',
@@ -88,15 +104,16 @@ async function main() {
         },
     ]
 
-    for (const event of events) {
-        await prisma.event.upsert({
-            where: { slug: event.slug },
+    for (const eventData of sampleEvents) {
+        const event = await prisma.event.upsert({
+            where: { slug: eventData.slug },
             update: {},
-            create: event,
+            create: eventData,
         })
+        console.log('✅ Created event:', event.title)
     }
 
-    console.log(`✅ Created ${events.length} events`)
+    // console.log(`✅ Created ${events.length} events`)
     console.log('🎉 Seeding complete!')
 }
 

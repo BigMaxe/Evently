@@ -1,5 +1,3 @@
-// This is your Prisma schema file for Supabase PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,52 +8,40 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// User Model
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // For email/password auth (hashed)
+  password      String?
   role          UserRole  @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
-  // Relations
-  accounts Account[]
-  sessions Session[]
-  events   Event[]   // Events created by this user
-  bookings Booking[] // Events booked by this user
+  accounts      Account[]
+  bookings      Booking[]
+  events        Event[]
+  sessions      Session[]
 }
 
-enum UserRole {
-  USER
-  ADMIN
-  ORGANIZER
-}
-
-// NextAuth Account Model (for OAuth)
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
-// NextAuth Session Model
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -64,7 +50,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// NextAuth Verification Token
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -73,39 +58,35 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Event Model
 model Event {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   title            String
-  description      String?  @db.Text
-  slug             String   @unique
+  description      String?
+  slug             String    @unique
   image            String
   category         String
   location         String
   date             DateTime
   startTime        String?
   endTime          String?
-  price            Float    @default(0)
-  isFree           Boolean  @default(false)
-  featured         Boolean  @default(false)
-  popular          Boolean  @default(false)
-  upcoming         Boolean  @default(true)
-  totalTickets     Int      @default(0)
-  availableTickets Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  // Relations
-  organizerId String
-  organizer   User      @relation(fields: [organizerId], references: [id])
-  bookings    Booking[]
+  price            Float     @default(0)
+  isFree           Boolean   @default(false)
+  featured         Boolean   @default(false)
+  popular          Boolean   @default(false)
+  upcoming         Boolean   @default(true)
+  totalTickets     Int       @default(0)
+  availableTickets Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  organizerId      String
+  bookings         Booking[]
+  organizer        User      @relation(fields: [organizerId], references: [id])
 
   @@index([category])
   @@index([date])
   @@index([slug])
 }
 
-// Booking Model (Tickets)
 model Booking {
   id            String        @id @default(cuid())
   ticketCount   Int           @default(1)
@@ -114,15 +95,19 @@ model Booking {
   bookingDate   DateTime      @default(now())
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-
-  // Relations
-  userId  String
-  eventId String
-  user    User   @relation(fields: [userId], references: [id])
-  event   Event  @relation(fields: [eventId], references: [id])
+  userId        String
+  eventId       String
+  event         Event         @relation(fields: [eventId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([eventId])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  ORGANIZER
 }
 
 enum PaymentStatus {

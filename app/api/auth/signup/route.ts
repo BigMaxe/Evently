@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
                 name: name || email.split('@')[0],
                 email,
                 password: hashedPassword,
+                role: 'USER',
             }
         })
 
@@ -51,12 +52,38 @@ export async function POST(request: NextRequest) {
                 id: user.id,
                 name: user.name,
                 email: user.email,
+                role: user.role,
             }
         }, { status: 201 })
     } catch (error) {
-        console.error('Sign up error:', error)
+        console.error('Sign up error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack: undefined,
+            error
+        })
+
+        if (error instanceof Error) {
+            if (error.message.includes('Unique constraint')) {
+                return NextResponse.json(
+                    { error: 'User with this email already exists' },
+                    { status: 400 }
+                )
+            }
+            if (error.message.includes('connection')) {
+                return NextResponse.json(
+                    { error: 'Database connection error. Please try again.' },
+                    { status: 503 }
+                )
+            }
+        }
+
         return NextResponse.json(
-            { error: 'Failed to create user' },
+            {
+                error: 'Failed to create user',
+                details: process.env.NODE_ENV === 'development'
+                    ? error instanceof Error ? error.message : 'Unknown error'
+                    : undefined
+            },
             { status: 500 }
         )
     }
