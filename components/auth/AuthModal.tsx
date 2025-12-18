@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import { signIn } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Facebook, Apple } from "lucide-react"
+import { X, Facebook, Apple, Mail } from "lucide-react"
 
 
 type AuthView = 'signin' | 'signup' | 'forgot' | 'unlock'
@@ -23,6 +23,8 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
     const [rememberMe, setRememberMe] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
+    const [showEmailVerificationNotice, setShowEmailVerificationNotice] = useState(false)
+    const [userEmail, setUserEmail] = useState('')
 
     const handleSocialSignIn = async (provider: 'google' | 'facebook' | 'apple') => {
         try {
@@ -109,20 +111,9 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
 
             console.log('Sign up successful, now signing in...')
 
-            // Auto sign in after successful signup
-            const signInResult = await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
-            })
+            setUserEmail(email)
+            setShowEmailVerificationNotice(true)
 
-            if (signInResult?.error) {
-                setError('Account created! Please sign in manually.')
-                setView('signin')
-            } else {
-                console.log('Auto sign in successful!')
-                window.location.reload()
-            }
         } catch (error) {
             console.error('Sign up error:', error)
             setError('An unexpected error occurred. Please try again.')
@@ -504,6 +495,77 @@ export function AuthModal({ isOpen, onClose, defaultView = 'signin' }: AuthModal
                                         </button>
                                         <button onClick={() => { setView('signup'); setError('') }} className="text-gray-600 hover:text-black transition">
                                             Sign Up
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Email Verification Notice view */}
+                            {showEmailVerificationNotice && (
+                                <div>
+                                    <div className="text-center mb-6">
+                                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Mail className="w-8 h-8 text-green-600" />
+                                        </div>
+                                        <h2 className="text-3xl font-bold text-green-600 mb-2 font-black-han-sans">Check Your Email</h2>
+                                        <p className="text-gray-600 mb-4 font-sarala">
+                                            We've sent a verification link to
+                                        </p>
+                                        <p className="text-gray-900 font-semibold mb-4 font-sarala">{userEmail}</p>
+                                        <p className="text-gray-600 text-sm font-sarala">
+                                            Click the link in the email to verify your account. The link will expire in 24 hours.
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                        <p className="text-sm text-blue-800 font-sarala">
+                                            <strong>Didn't receive the email?</strong> Check your spam folder or click the button below to resend.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={async () => {
+                                            setIsLoading(true)
+                                            try {
+                                                const response = await fetch(`/api/auth/verify-email?email=${encodeURIComponent(userEmail)}`)
+                                                const data = await response.json()
+                                                if (response.ok) {
+                                                    alert('Verification email resent! Please check your inbox.')
+                                                } else {
+                                                    alert(data.error || 'Failed to resend email')
+                                                }
+                                            } catch (error) {
+                                                alert('Failed to resend email. Please try again.')
+                                            } finally {
+                                                setIsLoading(false)
+                                            }
+                                        }}
+                                        disabled={isLoading}
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition mb-4 disabled:opacity-50 font-sarala flex items-center justify-center gap-2"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                                Resending...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Mail className="w-4 h-4" />
+                                                Resend Verification Email
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <div className="text-center">
+                                        <button
+                                            onClick={() => {
+                                                setShowEmailVerificationNotice(false)
+                                                setView('signin')
+                                                setError('')
+                                            }}
+                                            className="text-gray-600 hover:text-green-600 transition font-sarala text-sm"
+                                        >
+                                            Back to Sign In
                                         </button>
                                     </div>
                                 </div>

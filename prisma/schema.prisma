@@ -16,12 +16,22 @@ model User {
   image         String?
   password      String?
   role          UserRole  @default(USER)
+  emailVerificationToken String?   @unique
+  emailVerificationExpiry DateTime?
+  phone                  String?
+  phoneVerified          Boolean   @default(false)
+  phoneVerificationToken String?
+  phoneVerificationExpiry DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      Account[]
   bookings      Booking[]
   events        Event[]
   sessions      Session[]
+
+  @@index([emailVerificationToken])
+  @@index([phoneVerificationToken])
+
 }
 
 model Account {

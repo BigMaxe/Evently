@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Menu, Search, X, User, LogOut } from 'lucide-react'
+import { OrganizerVerificationModal } from '@/components/auth/OrganizerVerificationModal'
 
 export function EventsPageHeader() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -12,6 +13,8 @@ export function EventsPageHeader() {
     const [isVisible, setIsVisible] = useState(true)
     const [lastScrollY, setLastScrollY] = useState(0)
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+    const [showVerificationModal, setShowVerificationModal] = useState(false)
+    const [userRole, setUserRole] = useState<string | null>(null)
     
     const pathname = usePathname()
     const { data: session, status } = useSession()
@@ -46,6 +49,12 @@ export function EventsPageHeader() {
             }
         }
 
+        useEffect(() => {
+            if (isAuthenticated && session?.user?.email) {
+                checkUserRole()
+            }
+        }, [isAuthenticated, session])
+
         window.addEventListener('scroll', handleScroll, { passive: true })
 
         return () => {
@@ -55,6 +64,30 @@ export function EventsPageHeader() {
 
     const handleSignOut = async () => {
         await signOut({ callbackUrl: '/' })
+    }
+
+    const checkUserRole = async () => {
+        try {
+            const response = await fetch('/api/auth/check-role')
+            const data = await response.json()
+            setUserRole(data.role)
+        } catch (error) {
+            console.error('Failed to check user role:', error)
+        }
+    }
+
+    const handleMyEventsClick = (e: React.MouseEvent) => {
+        if (userRole !== 'ORGANIZER' && userRole !== 'ADMIN') {
+            e.preventDefault()
+            setShowVerificationModal(true)
+        }
+    }
+
+    const handleCreateEventClick = (e: React.MouseEvent) => {
+        if (userRole !== 'ORGANIZER' && userRole !== 'ADMIN') {
+            e.preventDefault()
+            setShowVerificationModal(true)
+        }
     }
 
     return (
@@ -108,6 +141,7 @@ export function EventsPageHeader() {
                         {isAuthenticated && (
                             <Link
                                 href="/my-events"
+                                onClick={handleMyEventsClick}
                                 className={`font-semibold transition font-sarala ${
                                     pathname === '/my-events' 
                                         ? 'text-green-600' 
@@ -125,6 +159,7 @@ export function EventsPageHeader() {
                             <>
                                 <Link
                                     href="/create-event"
+                                    onClick={handleCreateEventClick}
                                     className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg transition font-sarala"
                                 >
                                     Create Event
@@ -212,8 +247,11 @@ export function EventsPageHeader() {
                         {isAuthenticated && (
                             <Link
                                 href="/my-events"
+                                onClick={(e) => {
+                                    handleMyEventsClick(e)
+                                    setIsMenuOpen(false)
+                                }}
                                 className="block font-semibold text-gray-700 hover:text-green-600 transition font-sarala"
-                                onClick={() => setIsMenuOpen(false)}
                             >
                                 My Events
                             </Link>
@@ -224,8 +262,11 @@ export function EventsPageHeader() {
                                 <>
                                     <Link
                                         href="/create-event"
+                                        onClick={(e) => {
+                                            handleCreateEventClick(e)
+                                            setIsMenuOpen(false)
+                                        }}
                                         className="block w-full bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg transition text-center font-sarala"
-                                        onClick={() => setIsMenuOpen(false)}
                                     >
                                         Create Event
                                     </Link>
@@ -252,6 +293,15 @@ export function EventsPageHeader() {
                     </div>
                 )}
             </nav>
+
+            <OrganizerVerificationModal 
+                isOpen={showVerificationModal}
+                onClose={() => setShowVerificationModal(false)}
+                onSuccess={() => {
+                    setUserRole('ORGANIZER')
+                    setShowVerificationModal(false)
+                }}
+            />
         </header>
     )
 }

@@ -1,3 +1,11 @@
+-- NEW: Disable RLS for Prisma tables
+ALTER TABLE "User" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Account" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Session" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "VerificationToken" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Event" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "Booking" DISABLE ROW LEVEL SECURITY;
+
 -- Function: Automatically update available Tickets when booking is created
 CREATE OR REPLACE FUNCTION update_available_tickets()
 RETURNS TRIGGER AS $$
@@ -141,5 +149,45 @@ RETURNS void AS $$
 BEGIN
     DELETE FROM "VerificationToken"
     WHERE expires < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- NEW: Indexes for email verification
+CREATE INDEX IF NOT EXISTS idx_user_email_verification_token 
+ON "User"("emailVerificationToken") 
+WHERE "emailVerificationToken" IS NOT NULL;
+
+-- NEW: Indexes for phone verification
+CREATE INDEX IF NOT EXISTS idx_user_phone 
+ON "User"("phone") 
+WHERE "phone" IS NOT NULL;
+
+-- NEW: Index for checking organizers
+CREATE INDEX IF NOT EXISTS idx_user_role 
+ON "User"("role");
+
+-- NEW: Clean up expired email tokens
+CREATE OR REPLACE FUNCTION cleanup_expired_email_tokens()
+RETURNS void AS $$
+BEGIN
+    UPDATE "User"
+    SET 
+        "emailVerificationToken" = NULL,
+        "emailVerificationExpiry" = NULL
+    WHERE "emailVerificationExpiry" < NOW()
+        AND "emailVerificationToken" IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- NEW: Clean up expired phone tokens
+CREATE OR REPLACE FUNCTION cleanup_expired_phone_tokens()
+RETURNS void AS $$
+BEGIN
+    UPDATE "User"
+    SET 
+        "phoneVerificationToken" = NULL,
+        "phoneVerificationExpiry" = NULL
+    WHERE "phoneVerificationExpiry" < NOW()
+        AND "phoneVerificationToken" IS NOT NULL;
 END;
 $$ LANGUAGE plpgsql;
